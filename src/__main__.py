@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 from src.loader import load_functions_definition, load_test_prompts
 from llm_sdk import Small_LLM_Model
+from .vocab import load_vocab
 
 
 def setup_arguments() -> argparse.Namespace:
@@ -55,8 +56,17 @@ def main() -> None:
     print(f"Loaded {len(prompts)} prompts")
     # print(prompts)
 
-    model = Small_LLM_Model()
-    model.get_path_to_vocab_file
+    vocab = load_vocab(Small_LLM_Model().get_path_to_vocab_file())
+
+    # with open(vocab_file) as file:
+    #     content = file.read()
+    # with open("vocab_file_output", "w") as file:
+    #     file.write(content)
+
+    # for token_id, token_str in list(vocab.items())[:20]:
+    #     print(f"{token_id}: {repr(token_str)}")
+
+
 
 
 if __name__ == "__main__":
