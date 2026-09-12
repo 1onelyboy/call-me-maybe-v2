@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 from src.loader import load_functions_definition, load_test_prompts
 from llm_sdk import Small_LLM_Model
+from src.function_selector import build_prompt
 
 
 def setup_arguments() -> argparse.Namespace:
@@ -55,9 +56,16 @@ def main() -> None:
     print(f"Loaded {len(prompts)} prompts")
     # print(prompts)
 
-    model = Small_LLM_Model()
-    model.get_path_to_vocab_file
+    # model = Small_LLM_Model()
+    # model.get_path_to_vocab_file
 
+
+    # inside main(), after loading functions and prompts
+    for p in prompts:
+        prompt_text = build_prompt(p.prompt, functions)
+        print(prompt_text)
+        print("---")
+        break  # just test first prompt for now
 
 if __name__ == "__main__":
     try:
