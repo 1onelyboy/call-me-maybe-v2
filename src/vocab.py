@@ -15,7 +15,7 @@ def load_vocab(path: str) -> Dict[str, int]:
         with open(path, encoding="utf-8") as file:
             data = json.load(file)
     except FileNotFoundError:
-        print(f"Error: vocal file not found: {path}")
+        print(f"Error: vocab file not found: {path}")
         return {}
     except json.JSONDecodeError as e:
         print(f"Error: invalid JSON in vocab file: {e}")
