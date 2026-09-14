@@ -3,8 +3,8 @@ import sys
 from pathlib import Path
 from src.loader import load_functions_definition, load_test_prompts
 from llm_sdk import Small_LLM_Model
-from src.function_selector import build_prompt
 from src.vocab import load_vocab
+from src.function_selector import build_prompt, select_function
 
 
 def setup_arguments() -> argparse.Namespace:
@@ -59,8 +59,12 @@ def main() -> None:
 
     model = Small_LLM_Model()
     vocab_path = model.get_path_to_vocab_file()
+    vocab = load_vocab(vocab_path)
 
-    
+    for p in prompts:
+        print(f"\nPrompt: {p.prompt}")
+        selected = select_function(p.prompt, functions, model, vocab)
+        print(f"Selected function: {selected.name}")
 
 
     # # inside main(), after loading functions and prompts
