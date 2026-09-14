@@ -4,7 +4,7 @@ from pathlib import Path
 from src.loader import load_functions_definition, load_test_prompts
 from llm_sdk import Small_LLM_Model
 from src.vocab import load_vocab
-from src.function_selector import build_prompt, select_function
+from src.function_selector import select_function
 
 
 def setup_arguments() -> argparse.Namespace:
@@ -66,13 +66,13 @@ def main() -> None:
         selected = select_function(p.prompt, functions, model, vocab)
         print(f"Selected function: {selected.name}")
 
-
     # # inside main(), after loading functions and prompts
     # for p in prompts:
     #     prompt_text = build_prompt(p.prompt, functions)
     #     print(prompt_text)
     #     print("---")
     #     break  # just test first prompt for now
+
 
 if __name__ == "__main__":
     try:

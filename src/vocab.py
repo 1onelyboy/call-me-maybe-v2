@@ -21,4 +21,4 @@ def load_vocab(path: str) -> Dict[str, int]:
         print(f"Error: invalid JSON in vocab file: {e}")
         return {}
 
-    return {k: int(v) for k,v in data.items()}
+    return {k: int(v) for k, v in data.items()}

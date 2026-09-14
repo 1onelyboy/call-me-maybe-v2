@@ -37,7 +37,7 @@ def load_functions_definition(path: str) -> list[FunctionDefinition]:
         List of function definitions.
     """
     data = load_json_file(path)
-    if data is None: 
+    if data is None:
         return []
     if not isinstance(data, list):
         print("Error: functions definition must be a JSON array")

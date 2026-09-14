@@ -20,11 +20,15 @@ def build_prompt(
 
     for fn in functions:
         text += f"- {fn.name}: {fn.description}\n"
-    
-    text+= f"\nUser request: {prompt}\n"
-    text += "\nWhich function should be called? Answer with only the function name:\n"
-    
+
+    text += f"\nUser request: {prompt}\n"
+    text += (
+        "\nWhich function should be called? "
+        "Answer with only the function name:\n"
+    )
+
     return text
+
 
 def get_valid_tokens(
     generated: str,
