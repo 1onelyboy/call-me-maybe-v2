@@ -15,19 +15,20 @@ def build_prompt(
     Returns:
         A formatted prompt string.
     """
-    text = "You are a function calling assistant.\n"
-    text += "Available functions:\n"
+    system_prompt = "You are a function calling assistant.\n"
+    system_prompt += "Respond with ONLY the function name, nothing else.\n"
+    system_prompt += "Available functions:\n"
 
     for fn in functions:
-        text += f"- {fn.name}: {fn.description}\n"
+        system_prompt += f"- {fn.name}: {fn.description}\n"
 
-    text += f"\nUser request: {prompt}\n"
-    text += (
+    system_prompt += f"\nUser request: {prompt}\n"
+    system_prompt += (
         "\nWhich function should be called? "
         "Answer with only the function name:\n"
     )
 
-    return text
+    return system_prompt
 
 
 def get_valid_tokens(
@@ -61,7 +62,8 @@ def select_function(
     prompt: str,
     functions: list[FunctionDefinition],
     model: Small_LLM_Model,
-    vocab: dict[str, int]
+    vocab: dict[str, int],
+    max_iterations: int = 30
 ) -> FunctionDefinition:
     """Use LLM with constrained decoding to select the right function.
 
@@ -70,52 +72,50 @@ def select_function(
         functions: List of available function definitions.
         model: The LLM model to use.
         vocab: Dictionary mapping token strings to IDs.
+        max_iterations: Safety cap on generated tokens.
 
     Returns:
         The selected FunctionDefinition.
+
+    Raises:
+        ValueError: If the generated name matches no known function.
     """
-    # Step 1: build prompt
     prompt_text = build_prompt(prompt, functions)
-
-    # Step 2: encode to token IDs
-    input_ids = model.encode(prompt_text)[0].tolist()
-
-    # Step 3: get all valid function names
+    generation_ids = model.encode(prompt_text)[0].tolist()
     function_names = [fn.name for fn in functions]
-
-    # Step 4: generate function name token by token
     generated = ""
 
-    while True:
-        # get logits for next token
-        logits = model.get_logits_from_input_ids(input_ids)
+    for _ in range(max_iterations):
+        all_token_scores = model.get_logits_from_input_ids(generation_ids)
 
-        # find valid next tokens
-        valid_token_ids = get_valid_tokens(generated, function_names, vocab)
+        allowed_token_ids = get_valid_tokens(generated, function_names, vocab)
 
-        # set invalid tokens to -inf
-        for i in range(len(logits)):
-            if i not in valid_token_ids:
-                logits[i] = float("-inf")
+        # nothing valid can follow - stop instead of looping forever
+        if not allowed_token_ids:
+            break
 
-        # pick highest scoring valid token
-        next_token_id = logits.index(max(logits))
+        for token_id in range(len(all_token_scores)):
+            if token_id not in allowed_token_ids:
+                all_token_scores[token_id] = float("-inf")
 
-        # find what string this token represents
-        next_token_str = [k for k, v in vocab.items() if v == next_token_id][0]
+        best_token_id = all_token_scores.index(max(all_token_scores))
 
-        # add to generated text
-        generated += next_token_str
-        input_ids.append(next_token_id)
+        best_token_str = [
+            token_str
+            for token_str, token_id in vocab.items()
+            if token_id == best_token_id
+        ][0]
 
-        # check if we have a complete function name
+        generated += best_token_str
+        generation_ids.append(best_token_id)
+
         if generated in function_names:
             break
 
-    # Step 5: find and return the matching function
     for fn in functions:
         if fn.name == generated:
             return fn
 
-    # fallback: return first function
-    return functions[0]
+    raise ValueError(
+        f"Generated name '{generated}' matched no known function"
+    )
