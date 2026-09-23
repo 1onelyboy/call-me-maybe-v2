@@ -1,5 +1,6 @@
-from llm_sdk import Small_LLM_Model
+from llm_sdk.llm_sdk import Small_LLM_Model
 from src.models import FunctionDefinition
+import string
 
 
 def get_string_tokens(vocab: dict[str, int]) -> set[int]:
@@ -9,21 +10,15 @@ def get_string_tokens(vocab: dict[str, int]) -> set[int]:
         vocab: Dictionary mapping token strings to IDs.
 
     Returns:
-        Set of token IDs safe to use inside a string.
+        Set of token IDs made only of safe characters.
     """
+    allowed_chars = set(string.ascii_letters + string.digits + " '-.,!?Ġ[]{}()")
     valid_ids = set()
 
     for token_str, token_id in vocab.items():
-        # skip tokens with quotes or backslashes (would break JSON)
-        if '"' in token_str or "\\" in token_str:
-            continue
-        # skip tokens with newlines or control characters
-        if "\n" in token_str or "\r" in token_str or "\t" in token_str:
-            continue
-        # skip empty tokens
-        if not token_str:
-            continue
-        valid_ids.add(token_id)
+        # keep only tokens where EVERY character is in our safe list
+        if token_str and all(char in allowed_chars for char in token_str):
+            valid_ids.add(token_id)
 
     return valid_ids
 
@@ -37,14 +32,12 @@ def get_number_tokens(vocab: dict[str, int]) -> set[int]:
     Returns:
         Set of token IDs that are digits, minus sign or decimal point.
     """
-    valid_ids = set()
     allowed_chars = set("0123456789.-")
+    valid_ids = set()
 
     for token_str, token_id in vocab.items():
-        if not token_str:
-            continue
         # keep only tokens made entirely of number characters
-        if all(char in allowed_chars for char in token_str):
+        if token_str and all(char in allowed_chars for char in token_str):
             valid_ids.add(token_id)
 
     return valid_ids
@@ -194,18 +187,29 @@ def build_argument_prompt(
         A formatted prompt string.
     """
     lines = [
-        "Extract the arguments for this function call.",
+        "Extract the arguments for a function call.",
+        "Copy values exactly as they appear in the request.",
+        "",
+        "Example:",
+        "Request: Replace all digits in 'a1b2' with X",
+        'Arguments: {"source_string": "a1b2", "regex": "[0-9]+", '
+        '"replacement": "X"}',
+        "",
+        "Example:",
+        "Request: Replace all vowels in 'hello' with stars",
+        'Arguments: {"source_string": "hello", "regex": "[aeiouAEIOU]", '
+        '"replacement": "*"}',
+        "",
+        "Example:",
+        "Request: Substitute 'red' with 'blue' in 'a red car'",
+        'Arguments: {"source_string": "a red car", "regex": "red", '
+        '"replacement": "blue"}',
+        "",
         f"Function: {function.name}",
         f"Description: {function.description}",
-        "Parameters:",
+        f"Request: {prompt}",
+        "Arguments:",
     ]
-
-    for param_name, param_def in function.parameters.items():
-        lines.append(f"- {param_name}: {param_def.type}")
-
-    lines.append(f"\nUser request: {prompt}")
-    lines.append("\nArguments as JSON:")
-
     return "\n".join(lines)
 
 

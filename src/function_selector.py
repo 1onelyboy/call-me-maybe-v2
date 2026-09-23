@@ -1,5 +1,5 @@
 from src.models import FunctionDefinition
-from llm_sdk import Small_LLM_Model
+from llm_sdk.llm_sdk import Small_LLM_Model
 
 
 def build_prompt(
@@ -63,7 +63,7 @@ def select_function(
     functions: list[FunctionDefinition],
     model: Small_LLM_Model,
     vocab: dict[str, int],
-    max_iterations: int = 30
+    max_iterations: int = 42
 ) -> FunctionDefinition:
     """Use LLM with constrained decoding to select the right function.
 

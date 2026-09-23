@@ -2,10 +2,10 @@ import sys
 import argparse
 from pathlib import Path
 from src.loader import load_functions_definition, load_test_prompts
-from llm_sdk import Small_LLM_Model
+from llm_sdk.llm_sdk import Small_LLM_Model
 from src.vocab import load_vocab
 from src.function_selector import select_function
-# from src.decoder import generate_arguments
+from src.decoder import generate_arguments
 
 
 def setup_arguments() -> argparse.Namespace:
@@ -70,8 +70,8 @@ def main() -> None:
         except ValueError as e:
             print(f"Error: {e}")
             continue
-        # args = generate_arguments(p.prompt, selected, model, vocab)
-        # print(f"Arguments: {args}")
+        args = generate_arguments(p.prompt, selected, model, vocab)
+        print(f"Arguments: {args}")
 
     # # inside main(), after loading functions and prompts
     # for p in prompts:
