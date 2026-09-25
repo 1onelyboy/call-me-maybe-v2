@@ -12,7 +12,10 @@ def get_string_tokens(vocab: dict[str, int]) -> set[int]:
     Returns:
         Set of token IDs made only of safe characters.
     """
-    allowed_chars = set(string.ascii_letters + string.digits + " '-.,!?Ġ[]{}()")
+    safe_punctuation = string.punctuation.replace('"', "")
+    allowed_chars = set(
+        string.ascii_letters + string.digits + " Ġ" + safe_punctuation
+    )
     valid_ids = set()
 
     for token_str, token_id in vocab.items():
