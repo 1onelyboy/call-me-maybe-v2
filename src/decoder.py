@@ -29,7 +29,7 @@ def get_number_tokens(vocab: dict[str, int]) -> set[int]:
     """Get token IDs that are valid inside a JSON number value.
 
     Args:
-        vocab: Dictionary mapping token strings to IDs.
+        vocab: Dictionary mapping token strings  to IDs.
 
     Returns:
         Set of token IDs that are digits, minus sign or decimal point.
@@ -81,11 +81,32 @@ def pick_best_token(scores: list[float], allowed_ids: set[int]) -> int:
     return best_id
 
 
+def get_closing_tokens(vocab: dict[str, int]) -> set[int]:
+    """Get the tokens that can end a string value.
+
+    Args:
+        vocab: Dictionary mapping token strings to IDs.
+
+    Returns:
+        Set of token IDs that close a string.
+    """
+    letters_and_digits = set(string.ascii_letters + string.digits)
+    closing_ids = set()
+
+    for token_str, token_id in vocab.items():
+        if token_str.startswith('"'):
+            rest = token_str[1:]
+            if not any(char in letters_and_digits for char in rest):
+                closing_ids.add(token_id)
+
+    return closing_ids
+
+
 def generate_string_value(
     model: Small_LLM_Model,
     input_ids: list[int],
     vocab: dict[str, int],
-    max_tokens: int = 15
+    max_tokens: int = 50
 ) -> str:
     """Generate a string value, stopping at the closing quote.
 
@@ -98,14 +119,10 @@ def generate_string_value(
     Returns:
         The generated string value without quotes.
     """
-    # tokens allowed inside a string
+    # tokens allowed inside a string, plus the ones that end it
     string_tokens = get_string_tokens(vocab)
-
-    # find the closing quote token so the model can end the string
-    quote_id = vocab.get('"', -1)
-    allowed_ids = set(string_tokens)
-    if quote_id != -1:
-        allowed_ids.add(quote_id)
+    closing_ids = get_closing_tokens(vocab)
+    allowed_ids = string_tokens | closing_ids
 
     value = ""
 
@@ -113,16 +130,11 @@ def generate_string_value(
         scores = model.get_logits_from_input_ids(input_ids)
         best_id = pick_best_token(scores, allowed_ids)
 
-        if best_id == -1:
+        # nothing allowed, or the model closed the string
+        if best_id == -1 or best_id in closing_ids:
             break
 
-        token_text = token_id_to_text(best_id, vocab)
-
-        # the model closed the string - we are done
-        if token_text == '"':
-            break
-
-        value += token_text
+        value += token_id_to_text(best_id, vocab)
         input_ids.append(best_id)
 
     # tokenizers use a special char for space - convert it back
@@ -188,26 +200,19 @@ def build_argument_prompt(
         A formatted prompt string.
     """
     lines = [
-        "Extract the arguments for a function call.",
-        "Copy values exactly as they appear in the request.",
+        "Extract function arguments. Copy values exactly.",
         "",
-        "Example:",
-        "Request: Replace all digits in 'a1b2' with X",
-        'Arguments: {"source_string": "a1b2", "regex": "[0-9]+", '
-        '"replacement": "X"}',
+        "Request: Say hello to alice",
+        'Arguments: {"name": "alice"}',
         "",
-        "Example:",
-        "Request: Replace all vowels in 'hello' with stars",
-        'Arguments: {"source_string": "hello", "regex": "[aeiouAEIOU]", '
-        '"replacement": "*"}',
+        "Request: What is 7 times 12?",
+        'Arguments: {"a": 7, "b": 12}',
         "",
-        "Example:",
-        "Request: Substitute 'red' with 'blue' in 'a red car'",
-        'Arguments: {"source_string": "a red car", "regex": "red", '
-        '"replacement": "blue"}',
+        "Request: Replace all vowels in 'hi there' with stars",
+        'Arguments: {"source_string": "hi there", '
+        '"regex": "[aeiouAEIOU]", "replacement": "*"}',
         "",
-        f"Function: {function.name}",
-        f"Description: {function.description}",
+        f"Function: {function.name} - {function.description}",
         f"Request: {prompt}",
         "Arguments:",
     ]
