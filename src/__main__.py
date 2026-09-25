@@ -2,7 +2,8 @@ import argparse
 import json
 import sys
 from pathlib import Path
-
+from typing import Any
+from src.models import FunctionCall
 
 from src.loader import load_functions_definition, load_test_prompts
 from llm_sdk.llm_sdk import Small_LLM_Model
@@ -73,16 +74,33 @@ def main() -> None:
         sys.exit(1)
     print("Model loaded!")
 
+    results: list[dict[str, Any]] = []
+
     for p in prompts:
         print(f"\nPrompt: {p.prompt}")
         try:
             selected = select_function(p.prompt, functions, model, vocab)
             print(f"Selected function: {selected.name}")
-        except ValueError as e:
-            print(f"Error: {e}")
-            continue
-        args = generate_arguments(p.prompt, selected, model, vocab)
-        print(f"Arguments: {args}")
+            parameters = generate_arguments(p.prompt, selected, model, vocab)
+            print(f"Arguments: {parameters}")
+            name = selected.name
+        except Exception as e:
+            print(f"Error: {e}", file=sys.stderr)
+            name = ""
+            parameters = {}
+
+        call = FunctionCall(prompt=p.prompt, name=name, parameters=parameters)
+        results.append(call.model_dump())
+
+    try:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        with open(args.output, "w", encoding="utf-8") as file:
+            json.dump(results, file, indent=2)
+    except OSError as e:
+        print(f"Error: cannot write {args.output}: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"\nResults saved to {args.output}")
 
     # # inside main(), after loading functions and prompts
     # for p in prompts:
