@@ -1,6 +1,9 @@
-import sys
 import argparse
+import json
+import sys
 from pathlib import Path
+
+
 from src.loader import load_functions_definition, load_test_prompts
 from llm_sdk.llm_sdk import Small_LLM_Model
 from src.vocab import load_vocab
@@ -58,9 +61,19 @@ def main() -> None:
     print(f"Loaded {len(prompts)} prompts")
     # print(prompts)
 
-    model = Small_LLM_Model()
-    vocab_path = model.get_path_to_vocab_file()
-    vocab = load_vocab(vocab_path)
+    print(f"Loading model {args.model}...")
+    try:
+        model = Small_LLM_Model(args.model)
+    except Exception as e:
+        print(f"Error: cannot load model: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    # vocab_path = model.get_path_to_vocab_file()
+    vocab = load_vocab(model.get_path_to_vocab_file())
+    if not vocab:
+        print("Error: vocabulary could not be loaded", file=sys.stderr)
+        sys.exit(1)
+    print("Model loaded!")
 
     for p in prompts:
         print(f"\nPrompt: {p.prompt}")

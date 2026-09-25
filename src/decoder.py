@@ -16,7 +16,6 @@ def get_string_tokens(vocab: dict[str, int]) -> set[int]:
     valid_ids = set()
 
     for token_str, token_id in vocab.items():
-        # keep only tokens where EVERY character is in our safe list
         if token_str and all(char in allowed_chars for char in token_str):
             valid_ids.add(token_id)
 
@@ -36,7 +35,6 @@ def get_number_tokens(vocab: dict[str, int]) -> set[int]:
     valid_ids = set()
 
     for token_str, token_id in vocab.items():
-        # keep only tokens made entirely of number characters
         if token_str and all(char in allowed_chars for char in token_str):
             valid_ids.add(token_id)
 
@@ -259,11 +257,9 @@ def generate_arguments(
             value = generate_string_value(model, input_ids, vocab)
             result[param_name] = value
             # close the quote ourselves
-            input_ids += model.encode(f'{value}"')[0].tolist()
+            input_ids += model.encode('"')[0].tolist()
         else:
             # number or anything else
             number = generate_number_value(model, input_ids, vocab)
             result[param_name] = number
-            input_ids += model.encode(str(number))[0].tolist()
-
     return result
