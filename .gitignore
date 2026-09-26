@@ -28,3 +28,7 @@ data/output/
 
 # HuggingFace cache
 *.safetensors
+
+# Moulinette (provided separately)
+moulinette/
+data/correction/
