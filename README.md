@@ -64,7 +64,6 @@ uv run python -m src \
 # show the decoding step by step (bonus)
 uv run python -m src --visualize
 
-
 # list all the options
 uv run python -m src --help
 ```
