@@ -48,7 +48,6 @@ The Makefile wraps the same commands:
 | `make debug` | run the program under `pdb` |
 | `make clean` | remove `__pycache__` and `.mypy_cache` |
 | `make lint` | run `flake8` and `mypy` |
-| `make lint-strict` | run `flake8` and `mypy --strict` |
 
 ## Example usage
 
@@ -65,8 +64,6 @@ uv run python -m src \
 # show the decoding step by step (bonus)
 uv run python -m src --visualize
 
-# load another Hugging Face model (bonus)
-uv run python -m src --model Qwen/Qwen2.5-0.5B
 
 # list all the options
 uv run python -m src --help
