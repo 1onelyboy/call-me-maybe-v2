@@ -3,13 +3,14 @@ import json
 import sys
 from pathlib import Path
 from typing import Any
-from src.models import FunctionCall
 
+from src.models import FunctionCall
 from src.loader import load_functions_definition, load_test_prompts
 from llm_sdk.llm_sdk import Small_LLM_Model
 from src.vocab import load_vocab
 from src.function_selector import select_function
 from src.decoder import generate_arguments
+from src import visualizer
 
 
 def setup_arguments() -> argparse.Namespace:
@@ -40,12 +41,21 @@ def setup_arguments() -> argparse.Namespace:
         default="Qwen/Qwen3-0.6B",
         help="HuggingFace model identifier to load (default: Qwen/Qwen3-0.6B)."
     )
+    parser.add_argument(
+        "--visualize",
+        action="store_true",
+        help="Show how each answer is built, token by token"
+
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     """Main entry point for the function calling tool."""
     args = setup_arguments()
+
+    if args.visualize:
+        visualizer.enable()
 
     functions = load_functions_definition(args.functions_definition)
     prompts = load_test_prompts(args.input)
@@ -67,7 +77,6 @@ def main() -> None:
         print(f"Error: cannot load model: {e}", file=sys.stderr)
         sys.exit(1)
 
-    # vocab_path = model.get_path_to_vocab_file()
     vocab = load_vocab(model.get_path_to_vocab_file())
     if not vocab:
         print("Error: vocabulary could not be loaded", file=sys.stderr)
@@ -101,13 +110,6 @@ def main() -> None:
         sys.exit(1)
 
     print(f"\nResults saved to {args.output}")
-
-    # # inside main(), after loading functions and prompts
-    # for p in prompts:
-    #     prompt_text = build_prompt(p.prompt, functions)
-    #     print(prompt_text)
-    #     print("---")
-    #     break  # just test first prompt for now
 
 
 if __name__ == "__main__":

@@ -4,13 +4,13 @@ install:
 	uv sync
 
 run:
-	uv run python -m src $(ARGS)
+	uv run python -m src
 
 visualize:
-	uv run python -m src --visualize $(ARGS)
+	uv run python -m src --visualize
 
 debug:
-	uv run python -m pdb -m src $(ARGS)
+	uv run python -m pdb -m src
 
 clean:
 	find . -type d -name "__pycache__" -prune -exec rm -rf {} +

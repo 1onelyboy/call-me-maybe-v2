@@ -1,5 +1,6 @@
 from src.models import FunctionDefinition
 from llm_sdk.llm_sdk import Small_LLM_Model
+from src import visualizer
 
 
 def build_prompt(
@@ -107,6 +108,9 @@ def select_function(
         ][0]
 
         generated += best_token_str
+        visualizer.show_step(
+            "function", len(allowed_token_ids), best_token_str, generated
+        )
         generation_ids.append(best_token_id)
 
         if generated in function_names:
