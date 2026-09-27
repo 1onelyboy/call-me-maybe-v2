@@ -262,11 +262,3 @@ as a way to skip the work. It was used for:
   closing quote tokens).
 - **Environment problems.** Working around the disk quota on the 42
   machines and the torch versions that do not support macOS Intel.
-- **Code review.** Reading `src/decoder.py` and
-  `src/function_selector.py` to point out unclear names and missing
-  error cases.
-- **Writing.** Drafting the docstrings and this README.
-
-Every explanation was checked against the real code and the real
-output before being kept, and the final result was verified with the
-moulinette.
