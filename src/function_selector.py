@@ -91,7 +91,6 @@ def select_function(
 
         allowed_token_ids = get_valid_tokens(generated, function_names, vocab)
 
-        # nothing valid can follow - stop instead of looping forever
         if not allowed_token_ids:
             break
 
