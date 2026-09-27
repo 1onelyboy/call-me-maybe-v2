@@ -119,7 +119,6 @@ def generate_string_value(
     Returns:
         The generated string value without quotes.
     """
-    # tokens allowed inside a string, plus the ones that end it
     string_tokens = get_string_tokens(vocab)
     closing_ids = get_closing_tokens(vocab)
     allowed_ids = string_tokens | closing_ids
@@ -130,14 +129,12 @@ def generate_string_value(
         scores = model.get_logits_from_input_ids(input_ids)
         best_id = pick_best_token(scores, allowed_ids)
 
-        # nothing allowed, or the model closed the string
         if best_id == -1 or best_id in closing_ids:
             break
 
         value += token_id_to_text(best_id, vocab)
         input_ids.append(best_id)
 
-    # tokenizers use a special char for space - convert it back
     return value.replace("\u0120", " ").strip()
 
 
@@ -171,7 +168,6 @@ def generate_number_value(
         token_text = token_id_to_text(best_id, vocab)
         candidate = value + token_text
 
-        # stop if adding this token would break the number
         try:
             float(candidate)
         except ValueError:
@@ -236,22 +232,18 @@ def generate_arguments(
     Returns:
         Dictionary mapping argument names to their values.
     """
-    # build the prompt
     prompt_text = build_argument_prompt(prompt, function)
     input_ids = model.encode(prompt_text)[0].tolist()
 
-    # we write the JSON structure ourselves
     result: dict[str, object] = {}
     param_names = list(function.parameters.keys())
 
-    # start the JSON object
     json_prefix = "{"
     input_ids += model.encode(json_prefix)[0].tolist()
 
     for i, param_name in enumerate(param_names):
         param_type = function.parameters[param_name].type
 
-        # write the key ourselves - we already know it!
         if i > 0:
             key_part = f', "{param_name}": '
         else:
@@ -260,14 +252,11 @@ def generate_arguments(
         input_ids += model.encode(key_part)[0].tolist()
 
         if param_type == "string":
-            # open the quote ourselves
             input_ids += model.encode('"')[0].tolist()
             value = generate_string_value(model, input_ids, vocab)
             result[param_name] = value
-            # close the quote ourselves
             input_ids += model.encode('"')[0].tolist()
         else:
-            # number or anything else
             number = generate_number_value(model, input_ids, vocab)
             result[param_name] = number
     return result
