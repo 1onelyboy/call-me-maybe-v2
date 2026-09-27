@@ -252,7 +252,7 @@ wrong answer came from.
 
 ### How AI was used
 
-An AI assistant (Claude) was used as a tutor and as a review tool, not
+An AI assistant was used as a tutor and as a review tool, not
 as a way to skip the work. It was used for:
 
 - **Understanding the theory.** Explanations of tokenization, logits
